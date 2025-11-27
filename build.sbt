@@ -17,9 +17,9 @@ lazy val root = (project in file("."))
         case _                            => throw new Exception("Unknown platform!")
       }
       Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
-        .map(m => "org.openjfx" % s"javafx-$m" % "21.0.4" classifier osName)
+        .map(m => "org.openjfx" % s"javafx-$m" % "25" classifier osName)
     },
-    libraryDependencies ++= Seq("org.scalafx" %% "scalafx" % "21.0.0-R32")
+    libraryDependencies ++= Seq("org.scalafx" %% "scalafx" % "24.0.2-R36")
   )
 //enable for sbt-assembly
 //assembly / assemblyMergeStrategy := {
