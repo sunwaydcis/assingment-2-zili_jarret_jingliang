@@ -13,6 +13,8 @@ import scala.io.Codec
     val data: List[Map[String, String]] = reader.allWithHeaders()
 
     if data.nonEmpty then {
+      val bookingCountAnalysis = new BookingCountAnalysis()
+      bookingCountAnalysis.analyze(data) //run the question
       val bookingPriceAnalysis = new BookingPriceAnalysis()
       bookingPriceAnalysis.analyze(data) //run the question
 
@@ -27,6 +29,24 @@ trait IndicatorAnalysis {
 object StringToDouble {
   def safeToDouble(str:String): Double =
     try str.toDouble catch {case _: Throwable => 0.0}
+}
+
+// Question 1
+class BookingCountAnalysis extends IndicatorAnalysis {
+  def analyze(data:List[Map[String,String]]): Unit = {
+     val countryCounts = data
+      // group bookings by origin country
+      .groupBy(_("Origin Country"))
+      .view
+      // count bookings for each country
+      .mapValues(_.size).toMap
+
+     val (topCountry, count) = countryCounts.maxBy(_._2) // gets second element of each key value pair
+
+     println("Country with the highest number of bookings:")
+     println(s"- Country: $topCountry")
+     println(s"- Number of Bookings: $count")
+  }
 }
 
 //Question 2 a
