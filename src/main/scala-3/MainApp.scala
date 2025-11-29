@@ -14,7 +14,7 @@ import scala.io.Codec
 
     if data.nonEmpty then {
       val bookingPriceAnalysis = new BookingPriceAnalysis()
-      bookingPriceAnalysis.analyze(data)
+      bookingPriceAnalysis.analyze(data) //run the question
 
     } else
       println("No data rows found in CSV.")
@@ -29,14 +29,15 @@ object StringToDouble {
     try str.toDouble catch {case _: Throwable => 0.0}
 }
 
+//Question 2 a
 class BookingPriceAnalysis extends IndicatorAnalysis {
   import StringToDouble._
   def analyze(data:List[Map[String,String]]): Unit = {
-    val bookingPriceRow = data.filter(row => row.getOrElse("Booking Price[SGD]", "").nonEmpty)
-    val cheapestBooking = bookingPriceRow.minByOption(row =>
+    val bookingPriceRow = data.filter(row => row.getOrElse("Booking Price[SGD]", "").nonEmpty) //filer out booking price
+    val cheapestBooking = bookingPriceRow.minByOption(row => //find the lowest number then convert to double
       safeToDouble(row.getOrElse("Booking Price[SGD]", ""))
     )
-    cheapestBooking.foreach { row =>
+    cheapestBooking.foreach { row =>  //print out the result
       println("Most Economical Hotel")
       println(s"- Hotel Name: ${row.getOrElse("Hotel Name","unknown")}")
       println(s"- Rooms: ${row.getOrElse("Rooms","unknown")}")
