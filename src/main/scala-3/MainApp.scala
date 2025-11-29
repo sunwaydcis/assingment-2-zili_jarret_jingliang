@@ -3,7 +3,7 @@ import scala.util.Using
 import scala.io.Codec
 
 @main def MainApp(): Unit =
-  println("Hotel analysis app starting... (CSV test)")
+  println("Hotel analysis app starting... (CSV test)\n")
 
   // Read CSV from src/main/resources using a lenient codec (CSV has characters that break strict UTF-8)
   val source = scala.io.Source.fromResource("Hotel_Dataset.csv")(Codec.ISO8859)
@@ -13,10 +13,19 @@ import scala.io.Codec
     val data: List[Map[String, String]] = reader.allWithHeaders()
 
     if data.nonEmpty then {
-      val bookingCountAnalysis = new BookingCountAnalysis()
-      bookingCountAnalysis.analyze(data) //run the question
-      val bookingPriceAnalysis = new BookingPriceAnalysis()
-      bookingPriceAnalysis.analyze(data) //run the question
+      //put all class into List for calling them at the same time
+      val runList: List[IndicatorAnalysis] = List(
+        new BookingCountAnalysis(),
+        new BookingPriceAnalysis()
+      )
+      runList.foreach{ item =>
+        item.analyze(data)
+      }
+
+      //val bookingCountAnalysis = new BookingCountAnalysis()
+      //.analyze(data) //run the question
+      //val bookingPriceAnalysis = new BookingPriceAnalysis()
+      //bookingPriceAnalysis.analyze(data) //run the question
 
     } else
       println("No data rows found in CSV.")
@@ -45,7 +54,7 @@ class BookingCountAnalysis extends IndicatorAnalysis {
 
      println("Country with the highest number of bookings:")
      println(s"- Country: $topCountry")
-     println(s"- Number of Bookings: $count")
+     println(s"- Number of Bookings: $count\n")
   }
 }
 
@@ -58,7 +67,7 @@ class BookingPriceAnalysis extends IndicatorAnalysis {
       safeToDouble(row.getOrElse("Booking Price[SGD]", ""))
     )
     cheapestBooking.foreach { row =>  //print out the result
-      println("Most Economical Hotel")
+      println("Most Economical Hotel:")
       println(s"- Hotel Name: ${row.getOrElse("Hotel Name","unknown")}")
       println(s"- Rooms: ${row.getOrElse("Rooms","unknown")}")
       println(s"- Booking Price: ${row.getOrElse("Booking Price[SGD]", "unknown")}")
