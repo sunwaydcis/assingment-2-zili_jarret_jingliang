@@ -17,7 +17,8 @@ import scala.io.Codec
       val runList: List[IndicatorAnalysis] = List(
         new BookingCountAnalysis(),
         new BookingPriceAnalysis(),
-        new DiscountAnalysis()
+        new DiscountAnalysis(),
+        new MostProfitableHotel()
       )
       runList.foreach{ item =>
         item.analyze(data)
@@ -93,7 +94,35 @@ class DiscountAnalysis extends IndicatorAnalysis {
     highestDiscount.foreach { row =>  //print out the result
       println("Highest Discount:")
       println(s"- Hotel Name: ${row.getOrElse("Hotel Name","unknown")}")
-      println(s"- Discount: ${row.getOrElse("Discount", "unknown")}")
+      println(s"- Discount: ${row.getOrElse("Discount", "unknown")}\n")
     }
+  }
+}
+
+
+
+//Question 3
+
+class MostProfitableHotel extends IndicatorAnalysis {
+  import StringToDouble._
+  def analyze(data: List[Map[String, String]]): Unit = {
+    val hotelProfits: Map[String, Double] = data
+      .groupBy(_("Hotel Name"))
+      .view
+      .mapValues { rows =>
+        rows.map { row =>
+          val numberOfPeople = safeToDouble(row.getOrElse("No. Of People", "0"))
+          val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "0"))
+          val profitMargin = safeToDouble(row.getOrElse("Profit Margin", "0"))
+          numberOfPeople * bookingPrice * profitMargin
+        }.sum
+      }
+      .toMap
+
+    val (mostProfitableHotel, totalProfit) = hotelProfits.maxBy(_._2)
+
+    println("Most profitable hotel when considering number of visitors and profit margin:")
+    println(s"- Hotel Name: $mostProfitableHotel")
+    println(f"- Total Profit: SGD $totalProfit%.2f\n")
   }
 }
