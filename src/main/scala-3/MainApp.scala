@@ -16,7 +16,8 @@ import scala.io.Codec
       //put all class into List for calling them at the same time
       val runList: List[IndicatorAnalysis] = List(
         new BookingCountAnalysis(),
-        new BookingPriceAnalysis()
+        new BookingPriceAnalysis(),
+        new DiscountAnalysis()
       )
       runList.foreach{ item =>
         item.analyze(data)
@@ -38,6 +39,12 @@ trait IndicatorAnalysis {
 object StringToDouble {
   def safeToDouble(str:String): Double =
     try str.toDouble catch {case _: Throwable => 0.0}
+}
+
+object StringToInt {
+  def safeToInt(str:String): Int =
+    try str.dropRight(1).toInt //remove the % symbol then convert to Int
+    catch {case _: NumberFormatException => 0}
 }
 
 // Question 1
@@ -67,10 +74,26 @@ class BookingPriceAnalysis extends IndicatorAnalysis {
       safeToDouble(row.getOrElse("Booking Price[SGD]", ""))
     )
     cheapestBooking.foreach { row =>  //print out the result
-      println("Most Economical Hotel:")
+      println("Cheapest Booking Price:")
       println(s"- Hotel Name: ${row.getOrElse("Hotel Name","unknown")}")
       println(s"- Rooms: ${row.getOrElse("Rooms","unknown")}")
-      println(s"- Booking Price: ${row.getOrElse("Booking Price[SGD]", "unknown")}")
+      println(s"- Booking Price: ${row.getOrElse("Booking Price[SGD]", "unknown")}\n")
+    }
+  }
+}
+
+//Question 2 b
+class DiscountAnalysis extends IndicatorAnalysis {
+  import StringToInt._
+  def analyze(data:List[Map[String,String]]): Unit = {
+    val discountRow = data.filter(row => row.getOrElse("Discount", "").nonEmpty) //filer out discount
+    val highestDiscount = discountRow.maxByOption(row => //find the highest discount then convert to Int
+      safeToInt(row.getOrElse("Discount", ""))
+    )
+    highestDiscount.foreach { row =>  //print out the result
+      println("Highest Discount:")
+      println(s"- Hotel Name: ${row.getOrElse("Hotel Name","unknown")}")
+      println(s"- Discount: ${row.getOrElse("Discount", "unknown")}")
     }
   }
 }
