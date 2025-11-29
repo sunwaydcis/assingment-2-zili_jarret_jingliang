@@ -9,13 +9,38 @@ import scala.io.Codec
   val source = scala.io.Source.fromResource("Hotel_Dataset.csv")(Codec.ISO8859)
 
   Using.resource(CSVReader.open(source)) { reader =>
-    val rows = reader.all()
 
-    if rows.nonEmpty then
-      println(s"Header: ${rows.head}")
+    val data: List[Map[String, String]] = reader.allWithHeaders()
 
-    if rows.size > 1 then
-      println(s"First data row: ${rows(1)}")
-    else
+    if data.nonEmpty then {
+      val bookingPriceAnalysis = new BookingPriceAnalysis()
+      bookingPriceAnalysis.analyze(data)
+
+    } else
       println("No data rows found in CSV.")
   }
+
+trait IndicatorAnalysis {
+  def analyze(data:List[Map[String,String]]): Unit
+}
+
+object StringToDouble {
+  def safeToDouble(str:String): Double =
+    try str.toDouble catch {case _: Throwable => 0.0}
+}
+
+class BookingPriceAnalysis extends IndicatorAnalysis {
+  import StringToDouble._
+  def analyze(data:List[Map[String,String]]): Unit = {
+    val bookingPriceRow = data.filter(row => row.getOrElse("Booking Price[SGD]", "").nonEmpty)
+    val cheapestBooking = bookingPriceRow.minByOption(row =>
+      safeToDouble(row.getOrElse("Booking Price[SGD]", ""))
+    )
+    cheapestBooking.foreach { row =>
+      println("Most Economical Hotel")
+      println(s"- Hotel Name: ${row.getOrElse("Hotel Name","unknown")}")
+      println(s"- Rooms: ${row.getOrElse("Rooms","unknown")}")
+      println(s"- Booking Price: ${row.getOrElse("Booking Price[SGD]", "unknown")}")
+    }
+  }
+}
