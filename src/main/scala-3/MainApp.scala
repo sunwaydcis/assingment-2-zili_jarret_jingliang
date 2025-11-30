@@ -106,25 +106,32 @@ class DiscountAnalysis extends IndicatorAnalysis {
 class MostProfitableHotel extends IndicatorAnalysis {
   import StringToDouble._
   def analyze(data: List[Map[String, String]]): Unit = {
-    val hotelProfits: Map[String, Double] = data
+    val hotelProfits: Map[String, (Double, Double)] = data
       .groupBy(_("Hotel Name"))
       .view
       .mapValues { rows =>
-        rows.map { row =>
+        val totalProfits = rows.map { row =>
           // find most profitable hotel by summing up profits based on hotel name
           val numberOfPeople = safeToDouble(row.getOrElse("No. Of People", "0"))
           val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "0"))
           val profitMargin = safeToDouble(row.getOrElse("Profit Margin", "0"))
           numberOfPeople * bookingPrice * profitMargin
         }.sum
+        
+        val totalVisitors = rows.map(row =>
+          StringToDouble.safeToDouble(row.getOrElse("No. Of People", "0"))
+        ).sum
+
+        (totalProfits, totalVisitors)
       }
       .toMap
     // returns row with highest profit
-    val (mostProfitableHotel, totalProfit) = hotelProfits.maxBy(_._2)
+    val (mostProfitableHotel, (totalProfit, totalVisitor)) = hotelProfits.maxBy(_._2._1)
 
     // print results with 2 decimals
     println("Most profitable hotel when considering number of visitors and profit margin:")
     println(s"- Hotel Name: $mostProfitableHotel")
+    println(f"- Total Number of Customers: $totalVisitor%.2f")
     println(f"- Total Profit: SGD $totalProfit%.2f\n")
   }
 }
