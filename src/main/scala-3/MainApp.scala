@@ -136,6 +136,8 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
         case (margin, norm) => println(f"$margin%.2f -> $norm%.2f") 
       }
     }
+
+    // anyone continue here not get all 3 criteria with scores
 }
 
 // Question 3
