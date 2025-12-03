@@ -69,7 +69,7 @@ class BookingCountAnalysis extends IndicatorAnalysis {
 class averagePricePerRoomPerDay extends IndicatorAnalysis {
   import StringToDouble._
   def analyze(data: List[Map[String, String]]): Unit = {
-    val BookingPricePerRoomPerDay: Map[String, List[Double]] = data.groupBy(_("Hotel Name")).view.mapValues { rows =>
+    val BookingPricePerRoomPerDay: Map[(String, String), List[Double]] = data.groupBy(row => (row("Hotel Name"), row("Destination Country"))).view.mapValues { rows =>
       rows.map { row =>
         val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "")) //filer out booking price
         val RoomsNum = safeToDouble(row.getOrElse("Rooms", "")) //filer out Rooms
@@ -83,7 +83,7 @@ class averagePricePerRoomPerDay extends IndicatorAnalysis {
     val highestValue = allAveragePricePerRoomPerDay.map(_.max).max
     val range = highestValue - lowestValue
 
-    val normalizedPrice: Map[String,List[Double]] =
+    val normalizedPrice: Map[(String, String),List[Double]] =
       BookingPricePerRoomPerDay.view.mapValues{ rows =>
         rows.map { price =>
           val v1 = (price - lowestValue) / range
