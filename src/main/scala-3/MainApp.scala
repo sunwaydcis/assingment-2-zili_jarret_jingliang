@@ -107,25 +107,18 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
       }
     }.toMap
 
-    // val normalizedPrice: Map[(String, String), List[Double]] = 
-    // bookingPricePerRoomPerDay.view.mapValues(prices => 
-    // normalizeLowerBetter(prices)
-    // ).toMap
+    // lower is better
+    val allPrices = scoresForCriteria.values.flatMap(_.map(_._1)).toList
+    val normalizedPrices = normalizeLowerBetter(allPrices)
 
-    // println(normalizedPrice)
+    // higher is better
+    val allDiscounts = scoresForCriteria.values.flatMap(_.map(_._2)).toList
+    val normalizedDiscounts = normalizeHigherBetter(allDiscounts)
 
-    // // Add this to see the count of bookings per hotel
-    // val bookingCounts = bookingPricePerRoomPerDay.map { case ((hotel, country), prices) =>
-    //   s"$hotel ($country)" -> prices.size
-    // }
-
-    // println("\nNumber of bookings per hotel:")
-    // bookingCounts.foreach { case (hotel, count) =>
-    //   println(s"- $hotel: $count bookings")
-    // }
-  }
+    // lower is better
+    val allMargins = scoresForCriteria.values.flatMap(_.map(_._3)).toList
+    val normalizedMargins = normalizeLowerBetter(allMargins)
 }
-
 
 // Question 3
 class MostProfitableHotel extends IndicatorAnalysis {
