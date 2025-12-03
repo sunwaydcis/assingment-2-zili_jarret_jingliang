@@ -16,7 +16,7 @@ import scala.io.Codec
       //put all class into List for calling them at the same time
       val runList: List[IndicatorAnalysis] = List(
         new BookingCountAnalysis(),
-        new averagePricePerRoomPerDay(),
+        new MostEconomicalHotelAnalysis(),
         new MostProfitableHotel()
       )
       runList.foreach{ item =>
@@ -66,7 +66,7 @@ class BookingCountAnalysis extends IndicatorAnalysis {
 }
 
 //New Question 2
-class averagePricePerRoomPerDay extends IndicatorAnalysis {
+class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
   import StringToDouble._
 
   private def normalizeHigherBetter(values: List[Double]): List[Double] = {
@@ -97,19 +97,12 @@ class averagePricePerRoomPerDay extends IndicatorAnalysis {
         bookingPrice / (numberOfDaysBooked * RoomsNum)
       }
     }.toMap
-    val allAveragePricePerRoomPerDay = BookingPricePerRoomPerDay.values.filter(rows => rows.nonEmpty)
-    val lowestValue = allAveragePricePerRoomPerDay.map(_.min).min
-    val highestValue = allAveragePricePerRoomPerDay.map(_.max).max
-    val range = highestValue - lowestValue
 
-    val normalizedPrice: Map[(String, String),List[Double]] =
-      BookingPricePerRoomPerDay.view.mapValues{ rows =>
-        rows.map { price =>
-          val v1 = (price - lowestValue) / range
-          val v2 = v1 * 100
-          100 - v2
-      }
-    }.toMap
+    val normalizedPrice: Map[(String, String), List[Double]] = 
+    BookingPricePerRoomPerDay.view.mapValues(prices => 
+    normalizeLowerBetter(prices)
+    ).toMap
+    
     println(normalizedPrice)
 
     // // Add this to see the count of bookings per hotel
