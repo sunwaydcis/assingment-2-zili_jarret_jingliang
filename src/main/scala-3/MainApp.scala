@@ -68,6 +68,25 @@ class BookingCountAnalysis extends IndicatorAnalysis {
 //New Question 2
 class averagePricePerRoomPerDay extends IndicatorAnalysis {
   import StringToDouble._
+
+  private def normalizeHigherBetter(values: List[Double]): List[Double] = {
+  if (values.isEmpty) return List()
+  val min = values.min
+  val max = values.max
+  val range = max - min
+  if (range == 0) values.map(_ => 100.0) // All get max score if same
+  else values.map(value => ((value - min) / range * 100))
+  }
+
+  private def normalizeLowerBetter(values: List[Double]): List[Double] = {
+    if (values.isEmpty) return List()
+    val min = values.min
+    val max = values.max
+    val range = max - min
+    if (range == 0) values.map(_ => 100.0) // All get max score if same
+    else values.map(value => 100 - ((value - min) / range * 100))
+  }
+
   def analyze(data: List[Map[String, String]]): Unit = {
     val BookingPricePerRoomPerDay: Map[(String, String), List[Double]] = data.groupBy(row => (row("Hotel Name"), row("Destination Country"))).view.mapValues { rows =>
       rows.map { row =>
