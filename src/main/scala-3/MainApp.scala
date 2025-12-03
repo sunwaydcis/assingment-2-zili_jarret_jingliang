@@ -52,7 +52,7 @@ class BookingCountAnalysis extends IndicatorAnalysis {
   def analyze(data:List[Map[String,String]]): Unit = {
      val countryCounts = data
       // group bookings by origin country
-      .groupBy(_("Origin Country"))
+      .groupBy(_("Destination Country"))
       .view
       // count bookings for each country
       .mapValues(_.size).toMap
