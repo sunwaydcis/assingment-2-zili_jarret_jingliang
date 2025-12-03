@@ -95,7 +95,11 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
         val numberOfDaysBooked = safeToDouble(row.getOrElse("No of Days", "1"))
         val bookingPricePerRoomPerDay = bookingPrice / (numberOfDaysBooked * RoomsNum)
 
-        val discount = safeToDouble(row.getOrElse("Discount", "0"))
+        val discount = row.get("Discount")
+          .map(_.replace("%", "")) // remove %
+          .flatMap(_.toDoubleOption)
+          .map(_ / 100.0) // convert to decimal
+          .getOrElse(0.0)
 
         val profitMargin = safeToDouble(row.getOrElse("Profit Margin", "0"))
 
