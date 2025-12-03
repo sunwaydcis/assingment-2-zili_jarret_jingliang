@@ -92,42 +92,18 @@ class averagePricePerRoomPerDay extends IndicatorAnalysis {
       }
     }.toMap
     println(normalizedPrice)
-  }
-}
 
-//Question 2 a
-/*class BookingPriceAnalysis extends IndicatorAnalysis {
-  import StringToDouble._
-  def analyze(data:List[Map[String,String]]): Unit = {
-    val bookingPriceRow = data.filter(row => row.getOrElse("Booking Price[SGD]", "").nonEmpty) //filer out booking price
-    val cheapestBooking = bookingPriceRow.minByOption(row => //find the lowest number then convert to double
-      safeToDouble(row.getOrElse("Booking Price[SGD]", ""))
-    )
-    cheapestBooking.foreach { row =>  //print out the result
-      println("Cheapest Booking Price:")
-      println(s"- Hotel Name: ${row.getOrElse("Hotel Name","unknown")}")
-      println(s"- Rooms: ${row.getOrElse("Rooms","unknown")}")
-      println(s"- Booking Price: ${row.getOrElse("Booking Price[SGD]", "unknown")}\n")
-    }
-  }
-}
+    // // Add this to see the count of bookings per hotel
+    // val bookingCounts = BookingPricePerRoomPerDay.map { case ((hotel, country), prices) =>
+    //   s"$hotel ($country)" -> prices.size
+    // }
 
-//Question 2 b
-class DiscountAnalysis extends IndicatorAnalysis {
-  import StringToInt._
-  def analyze(data:List[Map[String,String]]): Unit = {
-    val discountRow = data.filter(row => row.getOrElse("Discount", "").nonEmpty) //filer out discount
-    val highestDiscount = discountRow.maxByOption(row => //find the highest discount then convert to Int
-      safeToInt(row.getOrElse("Discount", ""))
-    )
-    highestDiscount.foreach { row =>  //print out the result
-      println("Highest Discount:")
-      println(s"- Hotel Name: ${row.getOrElse("Hotel Name","unknown")}")
-      println(s"- Discount: ${row.getOrElse("Discount", "unknown")}\n")
-    }
+    // println("\nNumber of bookings per hotel:")
+    // bookingCounts.foreach { case (hotel, count) =>
+    //   println(s"- $hotel: $count bookings")
+    // }
   }
 }
-*/
 
 
 // Question 3
