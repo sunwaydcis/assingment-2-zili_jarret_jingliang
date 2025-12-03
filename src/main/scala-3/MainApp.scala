@@ -86,7 +86,9 @@ class averagePricePerRoomPerDay extends IndicatorAnalysis {
     val normalizedPrice: Map[String,List[Double]] =
       BookingPricePerRoomPerDay.view.mapValues{ rows =>
         rows.map { price =>
-          (price - lowestValue) / range
+          val v1 = (price - lowestValue) / range
+          val v2 = v1 * 100
+          100 - v2
       }
     }.toMap
     println(normalizedPrice)
