@@ -16,8 +16,7 @@ import scala.io.Codec
       //put all class into List for calling them at the same time
       val runList: List[IndicatorAnalysis] = List(
         new BookingCountAnalysis(),
-        new BookingPriceAnalysis(),
-        new DiscountAnalysis(),
+        new averagePricePerRoomPerDay(),
         new MostProfitableHotel()
       )
       runList.foreach{ item =>
@@ -66,8 +65,36 @@ class BookingCountAnalysis extends IndicatorAnalysis {
   }
 }
 
+//New Question 2
+class averagePricePerRoomPerDay extends IndicatorAnalysis {
+  import StringToDouble._
+  def analyze(data: List[Map[String, String]]): Unit = {
+    val BookingPricePerRoomPerDay: Map[String, List[Double]] = data.groupBy(_("Hotel Name")).view.mapValues { rows =>
+      rows.map { row =>
+        val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "")) //filer out booking price
+        val RoomsNum = safeToDouble(row.getOrElse("Rooms", "")) //filer out Rooms
+        val numberOfDaysBooked = safeToDouble(row.getOrElse("No of Days", ""))
+
+        bookingPrice / (numberOfDaysBooked * RoomsNum)
+      }
+    }.toMap
+    val allAveragePricePerRoomPerDay = BookingPricePerRoomPerDay.values.filter(rows => rows.nonEmpty)
+    val lowestValue = allAveragePricePerRoomPerDay.map(_.min).min
+    val highestValue = allAveragePricePerRoomPerDay.map(_.max).max
+    val range = highestValue - lowestValue
+
+    val normalizedPrice: Map[String,List[Double]] =
+      BookingPricePerRoomPerDay.view.mapValues{ rows =>
+        rows.map { price =>
+          (price - lowestValue) / range
+      }
+    }.toMap
+    println(normalizedPrice)
+  }
+}
+
 //Question 2 a
-class BookingPriceAnalysis extends IndicatorAnalysis {
+/*class BookingPriceAnalysis extends IndicatorAnalysis {
   import StringToDouble._
   def analyze(data:List[Map[String,String]]): Unit = {
     val bookingPriceRow = data.filter(row => row.getOrElse("Booking Price[SGD]", "").nonEmpty) //filer out booking price
@@ -98,11 +125,10 @@ class DiscountAnalysis extends IndicatorAnalysis {
     }
   }
 }
-
+*/
 
 
 // Question 3
-
 class MostProfitableHotel extends IndicatorAnalysis {
   import StringToDouble._
   def analyze(data: List[Map[String, String]]): Unit = {
