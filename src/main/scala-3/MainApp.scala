@@ -88,25 +88,30 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
   }
 
   def analyze(data: List[Map[String, String]]): Unit = {
-    val BookingPricePerRoomPerDay: Map[(String, String), List[Double]] = data.groupBy(row => (row("Hotel Name"), row("Destination Country"))).view.mapValues { rows =>
+    val scoresForCriteria: Map[(String, String), List[(Double, Double, Double)]] = data.groupBy(row => (row("Hotel Name"), row("Destination Country"))).view.mapValues { rows =>
       rows.map { row =>
         val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "0")) //filer out booking price
         val RoomsNum = safeToDouble(row.getOrElse("Rooms", "1")) //filer out Rooms
         val numberOfDaysBooked = safeToDouble(row.getOrElse("No of Days", "1"))
+        val bookingPricePerRoomPerDay = bookingPrice / (numberOfDaysBooked * RoomsNum)
 
-        bookingPrice / (numberOfDaysBooked * RoomsNum)
+        val discount = safeToDouble(row.getOrElse("Discount", "0"))
+
+        val profitMargin = safeToDouble(row.getOrElse("Profit Margin", "0"))
+
+        (bookingPricePerRoomPerDay, discount, profitMargin)
       }
     }.toMap
 
-    val normalizedPrice: Map[(String, String), List[Double]] = 
-    BookingPricePerRoomPerDay.view.mapValues(prices => 
-    normalizeLowerBetter(prices)
-    ).toMap
+    // val normalizedPrice: Map[(String, String), List[Double]] = 
+    // bookingPricePerRoomPerDay.view.mapValues(prices => 
+    // normalizeLowerBetter(prices)
+    // ).toMap
 
-    println(normalizedPrice)
+    // println(normalizedPrice)
 
     // // Add this to see the count of bookings per hotel
-    // val bookingCounts = BookingPricePerRoomPerDay.map { case ((hotel, country), prices) =>
+    // val bookingCounts = bookingPricePerRoomPerDay.map { case ((hotel, country), prices) =>
     //   s"$hotel ($country)" -> prices.size
     // }
 
