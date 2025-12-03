@@ -118,6 +118,24 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
     // lower is better
     val allMargins = scoresForCriteria.values.flatMap(_.map(_._3)).toList
     val normalizedMargins = normalizeLowerBetter(allMargins)
+
+     println("=== Normalization Test Results ===")
+      println(s"Sample size: ${allPrices.size} bookings")
+      println("\nPrice per night (first 5):")
+      allPrices.take(5).zip(normalizedPrices.take(5)).foreach { 
+        case (price, norm) => println(f"$price%.2f -> $norm%.2f") 
+      }
+      
+      println("\nDiscounts (first 5):")
+      allDiscounts.take(5).zip(normalizedDiscounts.take(5)).foreach { 
+        case (disc, norm) => println(f"${disc*100}%.1f%% -> $norm%.2f") 
+      }
+      
+      println("\nProfit Margins (first 5):")
+      allMargins.take(5).zip(normalizedMargins.take(5)).foreach { 
+        case (margin, norm) => println(f"$margin%.2f -> $norm%.2f") 
+      }
+    }
 }
 
 // Question 3
