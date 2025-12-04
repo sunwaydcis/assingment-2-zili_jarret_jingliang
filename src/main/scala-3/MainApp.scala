@@ -38,14 +38,21 @@ trait IndicatorAnalysis {
 
 object StringToDouble {
   def safeToDouble(str:String): Double =
-    try str.toDouble catch {case _: Throwable => 0.0}
+    try
+      if(str.contains("%")) {
+        str.dropRight(1).toDouble
+      } else {
+        str.toDouble
+      }
+        catch {case _: Throwable => 0.0}
 }
 
-object StringToInt {
+//not used for now
+/*object StringToInt {
   def safeToInt(str:String): Int =
     try str.dropRight(1).toInt //remove the % symbol then convert to Int
     catch {case _: NumberFormatException => 0}
-}
+}*/
 
 // Question 1
 class BookingCountAnalysis extends IndicatorAnalysis {
@@ -67,15 +74,16 @@ class BookingCountAnalysis extends IndicatorAnalysis {
 
 //New Question 2
 class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
+
   import StringToDouble._
 
   private def normalizeHigherBetter(values: List[Double]): List[Double] = {
-  if (values.isEmpty) return List()
-  val min = values.min
-  val max = values.max
-  val range = max - min
-  if (range == 0) values.map(_ => 100.0) // All get max score if same
-  else values.map(value => ((value - min) / range * 100))
+    if (values.isEmpty) return List()
+    val min = values.min
+    val max = values.max
+    val range = max - min
+    if (range == 0) values.map(_ => 100.0) // All get max score if same
+    else values.map(value => ((value - min) / range * 100))
   }
 
   private def normalizeLowerBetter(values: List[Double]): List[Double] = {
@@ -93,11 +101,11 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
         val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "0")) //filer out booking price
         val RoomsNum = safeToDouble(row.getOrElse("Rooms", "1")) //filer out Rooms
         val numberOfDaysBooked = safeToDouble(row.getOrElse("No of Days", "1"))
+
         val bookingPricePerRoomPerDay = bookingPrice / (numberOfDaysBooked * RoomsNum)
 
         val discount = row.get("Discount")
-          .map(_.replace("%", "")) // remove %
-          .flatMap(_.toDoubleOption)
+          .map(StringToDouble.safeToDouble) // remove %
           .map(_ / 100.0) // convert to decimal
           .getOrElse(0.0)
 
@@ -119,7 +127,7 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
     val allMargins = scoresForCriteria.values.flatMap(_.map(_._3)).toList
     val normalizedMargins = normalizeLowerBetter(allMargins)
 
-     println("=== Normalization Test Results ===")
+    /*println("=== Normalization Test Results ===")
       println(s"Sample size: ${allPrices.size} bookings")
       println("\nPrice per night (first 5):")
       allPrices.take(5).zip(normalizedPrices.take(5)).foreach { 
@@ -134,11 +142,44 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
       println("\nProfit Margins (first 5):")
       allMargins.take(5).zip(normalizedMargins.take(5)).foreach { 
         case (margin, norm) => println(f"$margin%.2f -> $norm%.2f") 
+      }*/
+
+    val hotelList: List[(String, String)] =
+      scoresForCriteria.toList.flatMap { case ((hotel, country), rows) =>
+        List.fill(rows.size)((hotel, country)) // repeat for each row
       }
+
+    val allNormalizedScores: List[(Double, Double, Double, String, String)] =
+      normalizedPrices
+        .zip(normalizedDiscounts)
+        .zip(normalizedMargins)
+        .zip(hotelList)
+        .map { case (((priceScore, discountScore), marginScore), (hotel, country)) =>
+          (priceScore, discountScore, marginScore, hotel, country)
+        }
+
+    val averageResult: List[(Double, String, String)] = allNormalizedScores.map { case (priceScore, discountScore, marginScore, hotel, country) =>
+      val averageScore = (priceScore + discountScore + marginScore) / 3.0
+      (averageScore, hotel, country)
     }
+    // Get highest average
+    val maxAverageScore = averageResult.maxBy(_._1)._1
+
+    // Filter hotels that match that score
+    val highestAverageHotels =
+      averageResult.filter(_._1 == maxAverageScore)
+
+    println("Most Economical Hotel Analysis Result")
+    highestAverageHotels.foreach { case (score, hotel, country) =>
+      println(f"- Hotel Name: $hotel")
+      println(f"- Country: $country")
+      println(f"- Score: $score%.2f\n")
+    }
+  }
+}
 
     // anyone continue here not get all 3 criteria with scores
-}
+
 
 // Question 3
 class MostProfitableHotel extends IndicatorAnalysis {
