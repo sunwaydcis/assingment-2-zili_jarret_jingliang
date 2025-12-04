@@ -95,6 +95,8 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
     else values.map(value => 100 - ((value - min) / range * 100))
   }
 
+  /* --original version
+
   def analyze(data: List[Map[String, String]]): Unit = {
     val scoresForCriteria: Map[(String, String, String), List[(Double, Double, Double, String, String, String)]] =
       data.groupBy(row => (row("Hotel Name"), row("Destination Country"), row("Destination City"))).view.mapValues { rows =>
@@ -147,6 +149,79 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
 
     val highestAverageScore = averageResult.maxBy(_._1)._1  // Get highest average
     val highestAverageHotels = averageResult.filter(_._1 == highestAverageScore)  // Filter hotels that match that score
+
+    println("Most Economical Hotel Analysis Result")
+    highestAverageHotels.foreach { case (score, hotelName, country, city) =>
+      println(f"- Hotel Name: $hotelName")
+      println(f"- Country: $country")
+      println(f"- City: $city")
+      println(f"- Score: $score%.2f\n")
+    }
+  }
+}
+
+
+   */
+  // version 1 - all avg
+
+
+  def analyze(data: List[Map[String, String]]): Unit = {
+    val scoresForCriteria: Map[(String, String, String), (Double, Double, Double, String, String, String)] =
+      data.groupBy(row => (row("Hotel Name"), row("Destination Country"), row("Destination City"))).view.mapValues { rows =>
+        val hotelName = rows.head("Hotel Name")
+        val country = rows.head("Destination Country")
+        val city = rows.head("Destination City")
+
+        val bookingPricePerRoomPerDay = rows.map { row =>
+          val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "0")) //filer out booking price
+          val RoomsNum = safeToDouble(row.getOrElse("Rooms", "1")) //filer out Rooms
+          val numberOfDaysBooked = safeToDouble(row.getOrElse("No of Days", "1"))
+
+          bookingPrice / (numberOfDaysBooked * RoomsNum)
+        }.sum / rows.size
+
+        val discount = rows.map { row =>
+          row.get("Discount")
+            .map(StringToDouble.safeToDouble) // remove %
+            .map(_ / 100.0) // convert to decimal
+            .getOrElse(0.0)
+        }.sum / rows.size
+
+        val profitMargin = rows.map { row =>
+          safeToDouble(row.getOrElse("Profit Margin", "0"))
+        }.sum / rows.size
+        
+      (bookingPricePerRoomPerDay, discount, profitMargin, hotelName, country, city)
+      
+    }.toMap
+
+    // lower is better
+    val allPrices = scoresForCriteria.values.map(_._1).toList
+    val normalizedPrices = normalizeLowerBetter(allPrices)
+
+    // higher is better
+    val allDiscounts = scoresForCriteria.values.map(_._2).toList
+    val normalizedDiscounts = normalizeHigherBetter(allDiscounts)
+
+    // lower is better
+    val allMargins = scoresForCriteria.values.map(_._3).toList
+    val normalizedMargins = normalizeLowerBetter(allMargins)
+
+    val allNormalizedScores = normalizedPrices
+      .zip(normalizedDiscounts)
+      .zip(normalizedMargins)
+      .zip(scoresForCriteria.values.toList)
+      .map { case (((priceScore, discountScore), marginScore), (_, _, _, hotelName, country, city)) =>
+        (priceScore, discountScore, marginScore, hotelName, country, city)
+      }
+
+    val averageResult: List[(Double, String, String, String)] = allNormalizedScores.map { case (priceScore, discountScore, marginScore, hotelName, country, city) =>
+      val averageScore = (priceScore + discountScore + marginScore) / 3.0
+      (averageScore, hotelName, country, city)
+    }
+
+    val highestAverageScore = averageResult.maxBy(_._1)._1 // Get highest average
+    val highestAverageHotels = averageResult.filter(_._1 == highestAverageScore) // Filter hotels that match that score
 
     println("Most Economical Hotel Analysis Result")
     highestAverageHotels.foreach { case (score, hotelName, country, city) =>
