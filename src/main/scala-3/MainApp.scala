@@ -158,7 +158,6 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
   }
 }
 
-    // anyone continue here not get all 3 criteria with scores
 
 
 // Question 3
@@ -181,18 +180,20 @@ class MostProfitableHotel extends IndicatorAnalysis {
         val country = rows.head("Destination Country")
         val city = rows.head("Destination City")
 
-        // find most profitable hotel by summing up profits based on hotel name
+        // get total visitors based on country, city, hotel
         val totalVisitors = rows.map(row => safeToDouble(row.getOrElse("No. Of People", "0"))).sum
-
+        // get average profit margin by dividing the total number of records
         val avgProfitMargin = rows.map(row => safeToDouble(row.getOrElse("Profit Margin", "0"))).sum / rows.size
 
         (totalVisitors, avgProfitMargin, hotelName, country, city)
 
       }.toMap
 
+    // converting total visitors and average profitMargin to scores
     val normalizedVisitors = normalizeHigherBetter(hotelProfits.values.map(_._1).toList)
     val normalizedProfitMargin = normalizeHigherBetter(hotelProfits.values.map(_._2).toList)
 
+    // zip lists together
     val combinedListForHotelProfits = normalizedVisitors
       .zip(normalizedProfitMargin)
       .zip(hotelProfits.values.toList)
@@ -200,11 +201,13 @@ class MostProfitableHotel extends IndicatorAnalysis {
         (visitorScore, profitMarginScore, hotelName, country, city)
       }
 
+    // get final score for all hotels
     val finalScores: List[(Double, String, String, String)] = combinedListForHotelProfits.map { case (visitorScore, profitMarginScore, hotelName, country, city) =>
       val averageScores = (visitorScore + profitMarginScore) / 2.0
       (averageScores, hotelName, country, city)
     }
 
+    // get hotel name with highest score
     val highestProfitScore = finalScores.maxBy(_._1)._1
     val highestProfitHotel = finalScores.filter(_._1 == highestProfitScore)
 
