@@ -96,29 +96,29 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
   }
 
   def analyze(data: List[Map[String, String]]): Unit = {
-    val scoresForCriteria: Map[(String, String), List[(Double, Double, Double, String, String, String)]] =
-      data.groupBy(row => (row("Hotel Name"), row("Destination Country"))).view.mapValues { rows =>
-      rows.map { row =>
-        val hotelName = row("Hotel Name")
-        val country = row("Destination Country")
-        val city = row("Destination City")
+    val scoresForCriteria: Map[(String, String, String), List[(Double, Double, Double, String, String, String)]] =
+      data.groupBy(row => (row("Hotel Name"), row("Destination Country"), row("Destination City"))).view.mapValues { rows =>
+        rows.map { row =>
+          val hotelName = row("Hotel Name")
+          val country = row("Destination Country")
+          val city = row("Destination City")
 
-        val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "0")) //filer out booking price
-        val RoomsNum = safeToDouble(row.getOrElse("Rooms", "1")) //filer out Rooms
-        val numberOfDaysBooked = safeToDouble(row.getOrElse("No of Days", "1"))
+          val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "0")) //filer out booking price
+          val RoomsNum = safeToDouble(row.getOrElse("Rooms", "1")) //filer out Rooms
+          val numberOfDaysBooked = safeToDouble(row.getOrElse("No of Days", "1"))
 
-        val bookingPricePerRoomPerDay = bookingPrice / (numberOfDaysBooked * RoomsNum)
+          val bookingPricePerRoomPerDay = bookingPrice / (numberOfDaysBooked * RoomsNum)
 
-        val discount = row.get("Discount")
-          .map(StringToDouble.safeToDouble) // remove %
-          .map(_ / 100.0) // convert to decimal
-          .getOrElse(0.0)
+          val discount = row.get("Discount")
+            .map(StringToDouble.safeToDouble) // remove %
+            .map(_ / 100.0) // convert to decimal
+            .getOrElse(0.0)
 
-        val profitMargin = safeToDouble(row.getOrElse("Profit Margin", "0"))
+          val profitMargin = safeToDouble(row.getOrElse("Profit Margin", "0"))
 
-        (bookingPricePerRoomPerDay, discount, profitMargin, hotelName, country, city)
-      }
-    }.toMap
+          (bookingPricePerRoomPerDay, discount, profitMargin, hotelName, country, city)
+        }
+      }.toMap
 
     // lower is better
     val allPrices = scoresForCriteria.values.flatMap(_.map(_._1)).toList
@@ -164,33 +164,58 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
 // Question 3
 class MostProfitableHotel extends IndicatorAnalysis {
   import StringToDouble._
-  def analyze(data: List[Map[String, String]]): Unit = {
-    val hotelProfits: Map[String, (Double, Double)] = data
-      .groupBy(_("Hotel Name"))
-      .view
-      .mapValues { rows =>
-        val totalProfits = rows.map { row =>
-          // find most profitable hotel by summing up profits based on hotel name
-          val numberOfPeople = safeToDouble(row.getOrElse("No. Of People", "0"))
-          val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "0"))
-          val profitMargin = safeToDouble(row.getOrElse("Profit Margin", "0"))
-          numberOfPeople * bookingPrice * profitMargin
-        }.sum
-        
-        val totalVisitors = rows.map(row =>
-          StringToDouble.safeToDouble(row.getOrElse("No. Of People", "0"))
-        ).sum
 
-        (totalProfits, totalVisitors)
+  private def normalizeHigherBetter(values: List[Double]): List[Double] = {
+    if (values.isEmpty) return List()
+    val min = values.min
+    val max = values.max
+    val range = max - min
+    if (range == 0) values.map(_ => 100.0) // All get max score if same
+    else values.map(value => ((value - min) / range * 100))
+  }
+
+  def analyze(data: List[Map[String, String]]): Unit = {
+    val hotelProfits: Map[(String, String, String), (Double, Double, String, String, String)] =
+      data.groupBy(row => (row("Hotel Name"), row("Destination Country"), row("Destination City"))).view.mapValues { rows =>
+        val hotelName = rows.head("Hotel Name")
+        val country = rows.head("Destination Country")
+        val city = rows.head("Destination City")
+
+        // find most profitable hotel by summing up profits based on hotel name
+        val totalVisitors = rows.map(row => safeToDouble(row.getOrElse("No. Of People", "0"))).sum
+
+        val avgProfitMargin = rows.map(row => safeToDouble(row.getOrElse("Profit Margin", "0"))).sum / rows.size
+
+        (totalVisitors, avgProfitMargin, hotelName, country, city)
+
+      }.toMap
+
+    val normalizedVisitors = normalizeHigherBetter(hotelProfits.values.map(_._1).toList)
+    val normalizedProfitMargin = normalizeHigherBetter(hotelProfits.values.map(_._2).toList)
+
+    val combinedListForHotelProfits = normalizedVisitors
+      .zip(normalizedProfitMargin)
+      .zip(hotelProfits.values.toList)
+      .map { case ((visitorScore, profitMarginScore), (_,_,hotelName, country, city)) =>
+        (visitorScore, profitMarginScore, hotelName, country, city)
       }
-      .toMap
-    // returns row with highest profit
-    val (mostProfitableHotel, (totalProfit, totalVisitor)) = hotelProfits.maxBy(_._2._1)
+
+    val finalScores: List[(Double, String, String, String)] = combinedListForHotelProfits.map { case (visitorScore, profitMarginScore, hotelName, country, city) =>
+      val averageScores = (visitorScore + profitMarginScore) / 2.0
+      (averageScores, hotelName, country, city)
+    }
+
+    val highestProfitScore = finalScores.maxBy(_._1)._1
+    val highestProfitHotel = finalScores.filter(_._1 == highestProfitScore)
+
 
     // print results with 2 decimals
     println("Most profitable hotel when considering number of visitors and profit margin:")
-    println(s"- Hotel Name: $mostProfitableHotel")
-    println(f"- Total Number of Customers: $totalVisitor%.2f")
-    println(f"- Total Profit: SGD $totalProfit%.2f\n")
+    highestProfitHotel.foreach { case (finalScore, hotelName, country, city) =>
+      println(s"- Hotel Name: $hotelName")
+      println(f"- Country: $country")
+      println(f"- City: $city")
+      println(f"- Combined Score: $finalScore%.2f\n")
+    }
   }
 }
