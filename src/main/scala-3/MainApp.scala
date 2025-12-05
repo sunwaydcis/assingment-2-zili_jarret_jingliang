@@ -193,9 +193,9 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
         val profitMargin = rows.map { row =>
           safeToDouble(row.getOrElse("Profit Margin", "0"))
         }.sum / rows.size
-        
-      (bookingPricePerRoomPerDay, discount, profitMargin, hotelName, country, city)
-      
+
+        (bookingPricePerRoomPerDay, discount, profitMargin, hotelName, country, city)
+
     }.toMap
 
     // lower is better
