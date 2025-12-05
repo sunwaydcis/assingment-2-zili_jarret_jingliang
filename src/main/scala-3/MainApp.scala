@@ -47,6 +47,26 @@ object StringToDouble {
         catch {case _: Throwable => 0.0}
 }
 
+object NormalizationCalculation {
+  def normalizeHigherBetter(values: List[Double]): List[Double] = {
+    if (values.isEmpty) return List()
+    val min = values.min
+    val max = values.max
+    val range = max - min
+    if (range == 0) values.map(_ => 100.0) // All get max score if same
+    else values.map(value => ((value - min) / range * 100))
+  }
+
+  def normalizeLowerBetter(values: List[Double]): List[Double] = {
+    if (values.isEmpty) return List()
+    val min = values.min
+    val max = values.max
+    val range = max - min
+    if (range == 0) values.map(_ => 100.0) // All get max score if same
+    else values.map(value => 100 - ((value - min) / range * 100))
+  }
+}
+
 //not used for now
 /*object StringToInt {
   def safeToInt(str:String): Int =
@@ -76,24 +96,7 @@ class BookingCountAnalysis extends IndicatorAnalysis {
 class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
 
   import StringToDouble._
-
-  private def normalizeHigherBetter(values: List[Double]): List[Double] = {
-    if (values.isEmpty) return List()
-    val min = values.min
-    val max = values.max
-    val range = max - min
-    if (range == 0) values.map(_ => 100.0) // All get max score if same
-    else values.map(value => ((value - min) / range * 100))
-  }
-
-  private def normalizeLowerBetter(values: List[Double]): List[Double] = {
-    if (values.isEmpty) return List()
-    val min = values.min
-    val max = values.max
-    val range = max - min
-    if (range == 0) values.map(_ => 100.0) // All get max score if same
-    else values.map(value => 100 - ((value - min) / range * 100))
-  }
+  import NormalizationCalculation._
 
   /* --original version
 
@@ -238,15 +241,7 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
 // Question 3
 class MostProfitableHotel extends IndicatorAnalysis {
   import StringToDouble._
-
-  private def normalizeHigherBetter(values: List[Double]): List[Double] = {
-    if (values.isEmpty) return List()
-    val min = values.min
-    val max = values.max
-    val range = max - min
-    if (range == 0) values.map(_ => 100.0) // All get max score if same
-    else values.map(value => ((value - min) / range * 100))
-  }
+  import NormalizationCalculation._
 
   def analyze(data: List[Map[String, String]]): Unit = {
     val hotelProfits: Map[(String, String, String), (Double, Double, String, String, String)] =
