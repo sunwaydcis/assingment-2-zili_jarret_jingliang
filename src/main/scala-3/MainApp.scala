@@ -3,9 +3,9 @@ import scala.util.Using
 import scala.io.Codec
 
 @main def MainApp(): Unit =
-  println("Hotel analysis app starting... (CSV test)\n")
+  println("Hotel analysis app starting... (CSV test)")
 
-  // Read CSV from src/main/resources using a lenient codec (CSV has characters that break strict UTF-8)
+  // retrieve csv data using object ReportLoader
   val data = ReportLoader.loadCsv("Hotel_Dataset.csv")
 
   if data.nonEmpty then {
@@ -40,8 +40,9 @@ object StringToDouble {
 
 object ReportLoader {
   def loadCsv(resourcePath: String): List[Map[String, String]] = {
-    println(s"Loading CSV report from: $resourcePath")
+    println(s"Loading CSV report from: $resourcePath\n")
 
+    // Read CSV from src/main/resources using a lenient codec (CSV has characters that break strict UTF-8)
     val source = scala.io.Source.fromResource(resourcePath)(Codec.ISO8859)
 
     Using.resource(CSVReader.open(source)) { reader =>
