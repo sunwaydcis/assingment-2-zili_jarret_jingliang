@@ -152,7 +152,7 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
     val highestAverageScore = averageResult.maxBy(_._1)._1 // Get highest average
     val highestAverageHotels = averageResult.filter(_._1 == highestAverageScore) // Filter hotels that match that score
 
-    println("Most Economical Hotel Analysis Result")
+    println("Most Economical Hotel Analysis Result:")
     highestAverageHotels.foreach { case (score, hotelName, country, city) =>
       println(f"- Hotel Name: $hotelName")
       println(f"- Country: $country")
