@@ -98,76 +98,6 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
   import StringToDouble._
   import NormalizationCalculation._
 
-  /* --original version
-
-  def analyze(data: List[Map[String, String]]): Unit = {
-    val scoresForCriteria: Map[(String, String, String), List[(Double, Double, Double, String, String, String)]] =
-      data.groupBy(row => (row("Hotel Name"), row("Destination Country"), row("Destination City"))).view.mapValues { rows =>
-        rows.map { row =>
-          val hotelName = row("Hotel Name")
-          val country = row("Destination Country")
-          val city = row("Destination City")
-
-          val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "0")) //filer out booking price
-          val RoomsNum = safeToDouble(row.getOrElse("Rooms", "1")) //filer out Rooms
-          val numberOfDaysBooked = safeToDouble(row.getOrElse("No of Days", "1"))
-
-          val bookingPricePerRoomPerDay = bookingPrice / (numberOfDaysBooked * RoomsNum)
-
-          val discount = row.get("Discount")
-            .map(StringToDouble.safeToDouble) // remove %
-            .map(_ / 100.0) // convert to decimal
-            .getOrElse(0.0)
-
-          val profitMargin = safeToDouble(row.getOrElse("Profit Margin", "0"))
-
-          (bookingPricePerRoomPerDay, discount, profitMargin, hotelName, country, city)
-        }
-      }.toMap
-
-    // lower is better
-    val allPrices = scoresForCriteria.values.flatMap(_.map(_._1)).toList
-    val normalizedPrices = normalizeLowerBetter(allPrices)
-
-    // higher is better
-    val allDiscounts = scoresForCriteria.values.flatMap(_.map(_._2)).toList
-    val normalizedDiscounts = normalizeHigherBetter(allDiscounts)
-
-    // lower is better
-    val allMargins = scoresForCriteria.values.flatMap(_.map(_._3)).toList
-    val normalizedMargins = normalizeLowerBetter(allMargins)
-
-    val allNormalizedScores = normalizedPrices
-      .zip(normalizedDiscounts)
-      .zip(normalizedMargins)
-      .zip(scoresForCriteria.values.flatten.toList)
-      .map { case (((priceScore, discountScore), marginScore), (_,_,_,hotelName, country, city)) =>
-        (priceScore, discountScore, marginScore, hotelName, country, city)
-      }
-
-    val averageResult: List[(Double, String, String, String)] = allNormalizedScores.map { case (priceScore, discountScore, marginScore, hotelName, country, city) =>
-      val averageScore = (priceScore + discountScore + marginScore) / 3.0
-      (averageScore, hotelName, country, city)
-    }
-
-    val highestAverageScore = averageResult.maxBy(_._1)._1  // Get highest average
-    val highestAverageHotels = averageResult.filter(_._1 == highestAverageScore)  // Filter hotels that match that score
-
-    println("Most Economical Hotel Analysis Result")
-    highestAverageHotels.foreach { case (score, hotelName, country, city) =>
-      println(f"- Hotel Name: $hotelName")
-      println(f"- Country: $country")
-      println(f"- City: $city")
-      println(f"- Score: $score%.2f\n")
-    }
-  }
-}
-
-
-   */
-  // version 1 - all avg
-
-
   def analyze(data: List[Map[String, String]]): Unit = {
     val scoresForCriteria: Map[(String, String, String), (Double, Double, Double, String, String, String)] =
       data.groupBy(row => (row("Hotel Name"), row("Destination Country"), row("Destination City"))).view.mapValues { rows =>
@@ -175,14 +105,17 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
         val country = rows.head("Destination Country")
         val city = rows.head("Destination City")
 
+        // retrieve data for calculation for booking price
         val bookingPricePerRoomPerDay = rows.map { row =>
           val bookingPrice = safeToDouble(row.getOrElse("Booking Price[SGD]", "0")) //filer out booking price
           val RoomsNum = safeToDouble(row.getOrElse("Rooms", "1")) //filer out Rooms
           val numberOfDaysBooked = safeToDouble(row.getOrElse("No of Days", "1"))
 
+          // average booking price per room per day for total records per group
           bookingPrice / (numberOfDaysBooked * RoomsNum)
         }.sum / rows.size
 
+        // average discounts for total records per group
         val discount = rows.map { row =>
           row.get("Discount")
             .map(StringToDouble.safeToDouble) // remove %
@@ -190,6 +123,7 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
             .getOrElse(0.0)
         }.sum / rows.size
 
+        // average profitMargin for total records per group
         val profitMargin = rows.map { row =>
           safeToDouble(row.getOrElse("Profit Margin", "0"))
         }.sum / rows.size
@@ -210,6 +144,7 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
     val allMargins = scoresForCriteria.values.map(_._3).toList
     val normalizedMargins = normalizeLowerBetter(allMargins)
 
+    // link lists together
     val allNormalizedScores = normalizedPrices
       .zip(normalizedDiscounts)
       .zip(normalizedMargins)
@@ -218,11 +153,13 @@ class MostEconomicalHotelAnalysis extends IndicatorAnalysis {
         (priceScore, discountScore, marginScore, hotelName, country, city)
       }
 
+    // find average results for hotels
     val averageResult: List[(Double, String, String, String)] = allNormalizedScores.map { case (priceScore, discountScore, marginScore, hotelName, country, city) =>
       val averageScore = (priceScore + discountScore + marginScore) / 3.0
       (averageScore, hotelName, country, city)
     }
 
+    // get highest hotel with score
     val highestAverageScore = averageResult.maxBy(_._1)._1 // Get highest average
     val highestAverageHotels = averageResult.filter(_._1 == highestAverageScore) // Filter hotels that match that score
 
