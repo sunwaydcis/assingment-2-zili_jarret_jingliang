@@ -6,26 +6,22 @@ import scala.io.Codec
   println("Hotel analysis app starting... (CSV test)\n")
 
   // Read CSV from src/main/resources using a lenient codec (CSV has characters that break strict UTF-8)
-  val source = scala.io.Source.fromResource("Hotel_Dataset.csv")(Codec.ISO8859)
+  val data = ReportLoader.loadCsv("Hotel_Dataset.csv")
 
-  Using.resource(CSVReader.open(source)) { reader =>
+  if data.nonEmpty then {
+    //put all class into List for calling them at the same time
+    val runList: List[IndicatorAnalysis] = List(
+      new BookingCountAnalysis(),
+      new MostEconomicalHotelAnalysis(),
+      new MostProfitableHotel()
+    )
+    runList.foreach{ item =>
+      item.analyze(data)
+    }
 
-    val data: List[Map[String, String]] = reader.allWithHeaders()
+  } else
+    println("No data rows found in CSV.")
 
-    if data.nonEmpty then {
-      //put all class into List for calling them at the same time
-      val runList: List[IndicatorAnalysis] = List(
-        new BookingCountAnalysis(),
-        new MostEconomicalHotelAnalysis(),
-        new MostProfitableHotel()
-      )
-      runList.foreach{ item =>
-        item.analyze(data)
-      }
-
-    } else
-      println("No data rows found in CSV.")
-  }
 
 trait IndicatorAnalysis {
   def analyze(data:List[Map[String,String]]): Unit
@@ -40,6 +36,19 @@ object StringToDouble {
         str.toDouble
       }
         catch {case _: Throwable => 0.0}
+}
+
+object ReportLoader {
+  def loadCsv(resourcePath: String): List[Map[String, String]] = {
+    println(s"Loading CSV report from: $resourcePath")
+
+    val source = scala.io.Source.fromResource(resourcePath)(Codec.ISO8859)
+
+    Using.resource(CSVReader.open(source)) { reader =>
+      val data = reader.allWithHeaders()
+      data
+    }
+  }
 }
 
 object NormalizationCalculation {
