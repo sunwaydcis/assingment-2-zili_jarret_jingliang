@@ -23,11 +23,6 @@ import scala.io.Codec
         item.analyze(data)
       }
 
-      //val bookingCountAnalysis = new BookingCountAnalysis()
-      //.analyze(data) //run the question
-      //val bookingPriceAnalysis = new BookingPriceAnalysis()
-      //bookingPriceAnalysis.analyze(data) //run the question
-
     } else
       println("No data rows found in CSV.")
   }
@@ -67,12 +62,6 @@ object NormalizationCalculation {
   }
 }
 
-//not used for now
-/*object StringToInt {
-  def safeToInt(str:String): Int =
-    try str.dropRight(1).toInt //remove the % symbol then convert to Int
-    catch {case _: NumberFormatException => 0}
-}*/
 
 // Question 1
 class BookingCountAnalysis extends IndicatorAnalysis {
